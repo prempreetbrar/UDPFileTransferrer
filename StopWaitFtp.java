@@ -147,14 +147,18 @@ public class StopWaitFtp {
             FtpSegment segment = new FtpSegment(currentSequenceNumber, buffer, numBytes);
             DatagramPacket packet = FtpSegment.makePacket(segment, InetAddress.getByName(serverName), serverUDPPortNumber);
             UDPSocket.send(packet);
+            System.out.println("send " + currentSequenceNumber);
 
-            TimeoutHandler timerForInFlightPacket = new TimeoutHandler(UDPSocket, packet);
+            TimeoutHandler timerForInFlightPacket = new TimeoutHandler(UDPSocket, packet, currentSequenceNumber);
             timer.scheduleAtFixedRate(timerForInFlightPacket, INITIAL_TIMER_DELAY, retransmissionTimeout);
             
             while (true) {
-                UDPSocket.receive(packet);
-                FtpSegment ack = new FtpSegment(packet);
+                DatagramPacket ackPacket = new DatagramPacket(new byte[FtpSegment.MAX_SEGMENT_SIZE], FtpSegment.MAX_SEGMENT_SIZE);
+
+                UDPSocket.receive(ackPacket);
+                FtpSegment ack = new FtpSegment(ackPacket);
                 int ackNum = ack.getSeqNum();
+                System.out.println("ack " + ackNum);
     
                 if ((currentSequenceNumber + 1) == ackNum) {
                     currentSequenceNumber += 1;
