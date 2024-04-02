@@ -33,8 +33,6 @@ public class StopWaitFtp {
 	private static final Logger logger = Logger.getLogger("StopWaitFtp"); // global logger
 
     private static final int EOF = -1;
-    private static final int OFFSET = 0;
-    private static final int INITIAL_TIMER_DELAY = 0;
     private static final int MULTIPLE_OF_RETRANSMISSION_TIMEOUT = 10;
 
     private Socket TCPSocket;
@@ -87,8 +85,9 @@ public class StopWaitFtp {
             TCPInputStream = new DataInputStream(TCPSocket.getInputStream());
             TCPOutputStream = new DataOutputStream(TCPSocket.getOutputStream());
 
-            completeTCPHandshake(fileName);
-            sendFile(fileName, serverName);
+            File fileObject = new File(fileName);
+            completeTCPHandshake(fileObject);
+            sendFile(fileObject, serverName);
 
             wasSuccessful = true;
         } 
@@ -112,18 +111,17 @@ public class StopWaitFtp {
             timer.cancel();
             timer.purge();
         }
-
         return wasSuccessful;
     }
 
     /**
      * Completes the TCP handshake process with the server.
-     * @param fileName The name of the file whose info will be transmitted over the handshake.
+     * @param fileObject The fileObject that will eventually be transmitted to the server.
      * @throws IOException
      */
-    private void completeTCPHandshake(String fileName) throws IOException {
-        TCPOutputStream.writeUTF(fileName);
-        TCPOutputStream.writeLong((new File(fileName)).length());
+    private void completeTCPHandshake(File fileObject) throws IOException {
+        TCPOutputStream.writeUTF(fileObject.getName());
+        TCPOutputStream.writeLong(fileObject.length());
         TCPOutputStream.writeInt(UDPSocket.getLocalPort());
         TCPOutputStream.flush();
 
@@ -131,7 +129,7 @@ public class StopWaitFtp {
         currentSequenceNumber = TCPInputStream.readInt();
     }
 
-    private void sendFile(String fileName, String serverName) throws SocketTimeoutException, IOException {
+    private void sendFile(File fileObject, String serverName) throws SocketTimeoutException, IOException {
         /*
         * The numBytes tells us how many bytes to actually write to the stream; this may
         * be different from the buffer size (ie. if the number of bytes remaining is <
@@ -140,17 +138,17 @@ public class StopWaitFtp {
         */
         int numBytes = 0;
         byte[] buffer = new byte[FtpSegment.MAX_PAYLOAD_SIZE];
-        fileInputStream = new FileInputStream(fileName);
+        fileInputStream = new FileInputStream(fileObject);
         UDPSocket.setSoTimeout(connectionTimeout);
 
         while ((numBytes = fileInputStream.read(buffer)) != EOF) {
             FtpSegment segment = new FtpSegment(currentSequenceNumber, buffer, numBytes);
             DatagramPacket packet = FtpSegment.makePacket(segment, InetAddress.getByName(serverName), serverUDPPortNumber);
             UDPSocket.send(packet);
-            System.out.println("send " + currentSequenceNumber);
+            System.out.println("\nsend " + currentSequenceNumber);
 
             TimeoutHandler timerForInFlightPacket = new TimeoutHandler(UDPSocket, packet, currentSequenceNumber);
-            timer.scheduleAtFixedRate(timerForInFlightPacket, INITIAL_TIMER_DELAY, retransmissionTimeout);
+            timer.scheduleAtFixedRate(timerForInFlightPacket, retransmissionTimeout, retransmissionTimeout);
             
             while (true) {
                 DatagramPacket ackPacket = new DatagramPacket(new byte[FtpSegment.MAX_SEGMENT_SIZE], FtpSegment.MAX_SEGMENT_SIZE);
