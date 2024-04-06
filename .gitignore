@@ -3,3 +3,6 @@
 !*.java
 !*.jar
 !.gitignore
+!client_files
+!client_files/*
+!client
