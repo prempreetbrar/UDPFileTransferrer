@@ -1,13 +1,3 @@
-
-FtpServer
-
-Assignment 4
-CPSC 441
-
-Author: Majid Ghaderi
-Email: mghaderi@ucalgary.ca
-
- 
 Running the server:
 ==============
 Use the following command to start the server:
