@@ -16,32 +16,35 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
+
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+
 import java.util.Timer;
 import java.util.logging.*;
 
 public class StopWaitFtp {
 	private static final Logger logger = Logger.getLogger("StopWaitFtp"); // global logger
 
+    // constants
     private static final int EOF = -1;
     private static final int MULTIPLE_OF_RETRANSMISSION_TIMEOUT = 10;
 
+    // socket variables
     private Socket TCPSocket;
     private DatagramSocket UDPSocket;
     private DataInputStream TCPInputStream;
     private DataOutputStream TCPOutputStream;
 
+    // file variables
     private FileInputStream fileInputStream;
 
+    // miscellaneous info, including timer info
     private int serverUDPPortNumber;
     private int currentSequenceNumber;
     private int retransmissionTimeout;
@@ -85,6 +88,10 @@ public class StopWaitFtp {
             TCPInputStream = new DataInputStream(TCPSocket.getInputStream());
             TCPOutputStream = new DataOutputStream(TCPSocket.getOutputStream());
 
+            /* we need to create the file object here and save it; we cannot do new File(fileName)
+               multiple times, as otherwise Java has unexpected behaviour (the garbage collector may
+               not close the connection to the file in time for your new File instance)
+            */
             File fileObject = new File(fileName);
             completeTCPHandshake(fileObject);
             sendFile(fileObject, serverName);
@@ -92,11 +99,7 @@ public class StopWaitFtp {
             wasSuccessful = true;
         } 
         
-        /*
-         * We catch UnknownHostException first because it is a subclass of IOException. Of course,
-         * the behaviour in both catch blocks is identical (printStackTrace), but if we wanted different
-         * behaviour in the future, having these different blocks is good practice.
-         */
+        // will occur if server is non-responsive; NOT for retransmission. 
         catch (SocketTimeoutException e) {
             e.printStackTrace();
         }
@@ -108,7 +111,9 @@ public class StopWaitFtp {
         } 
         finally {
             closeGracefully(fileInputStream, TCPOutputStream, TCPInputStream, UDPSocket, TCPSocket);
+            // cancel all yet to be executed tasks
             timer.cancel();
+            // remove references to all cancelled tasks so that Java can garbage collect memory
             timer.purge();
         }
         return wasSuccessful;
@@ -123,12 +128,22 @@ public class StopWaitFtp {
         TCPOutputStream.writeUTF(fileObject.getName());
         TCPOutputStream.writeLong(fileObject.length());
         TCPOutputStream.writeInt(UDPSocket.getLocalPort());
+        // force TCP to actually send the handshake messages to the server
         TCPOutputStream.flush();
 
+        /* this is the actual port number that we want to use for sending the file; NOT
+           the port number used to establish the TCP connection.*/
         serverUDPPortNumber = TCPInputStream.readInt();
         currentSequenceNumber = TCPInputStream.readInt();
     }
 
+    /**
+     * sends the file to the server over UDP.
+     * @param fileObject The fileObject to transmit to the UDP server.
+     * @param serverName The name of the UDP server (hostname). 
+     * @throws SocketTimeoutException Thrown if the server is unresponsive. 
+     * @throws IOException
+     */
     private void sendFile(File fileObject, String serverName) throws SocketTimeoutException, IOException {
         /*
         * The numBytes tells us how many bytes to actually write to the stream; this may
@@ -138,7 +153,9 @@ public class StopWaitFtp {
         */
         int numBytes = 0;
         byte[] buffer = new byte[FtpSegment.MAX_PAYLOAD_SIZE];
+
         fileInputStream = new FileInputStream(fileObject);
+        // to check for a non-responsive server
         UDPSocket.setSoTimeout(connectionTimeout);
 
         while ((numBytes = fileInputStream.read(buffer)) != EOF) {
@@ -147,9 +164,17 @@ public class StopWaitFtp {
             UDPSocket.send(packet);
             System.out.println("\nsend " + currentSequenceNumber);
 
+            // the timer first starts after retransmissionTimeout seconds and then repeats until cancelled
             TimeoutHandler timerForInFlightPacket = new TimeoutHandler(UDPSocket, packet, currentSequenceNumber);
             timer.scheduleAtFixedRate(timerForInFlightPacket, retransmissionTimeout, retransmissionTimeout);
             
+            /*
+             * We need a while loop here when checking for ack packets; this is because we must 
+             * wait until we receive an ACK for the packet we just sent (STOP and WAIT; we are 
+             * stopping and WAITING). It is possible that the ack we get back is NOT the ack for the
+             * packet just sent (maybe it is a duplicate ACK or some other ACK), in which case stop-and-wait
+             * just ignores and does nothing (hence the while loop).
+             */
             while (true) {
                 DatagramPacket ackPacket = new DatagramPacket(new byte[FtpSegment.MAX_SEGMENT_SIZE], FtpSegment.MAX_SEGMENT_SIZE);
 
@@ -160,6 +185,10 @@ public class StopWaitFtp {
     
                 if ((currentSequenceNumber + 1) == ackNum) {
                     currentSequenceNumber += 1;
+                    /*
+                        will not cancel a timer task currently executing (ie. in certain cases, the
+                        timer will still retransmit)
+                     */ 
                     timerForInFlightPacket.cancel();
                     break;
                 }
