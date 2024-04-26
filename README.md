@@ -10,7 +10,7 @@ program implements its own reliability mechanism based on the stop-and-wait prot
   to exchange control information about the file transfer. The handshake takes place over TCP, while the actual file transfer is carried out
   over UDP. See the following figure:
 <br></br>
-![image](https://github.com/prempreetbrar/UDPFileTransferrer/assets/89614923/17ec3a65-ce55-4e29-b9b0-f2263ff72dfd)
+![image](https://github.com/prempreetbrar/UDPFileTransferrer/assets/89614923/8a966698-f6b0-4b0f-9171-c7733a819621)
 &nbsp;
 - The TCP `Socket` is used to exchange information about the file name to be sent, its length, the initial sequence number, as well as the UDP port
   number from the server.
