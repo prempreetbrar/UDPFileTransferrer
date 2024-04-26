@@ -12,9 +12,6 @@
  * The max size of the payload is given by MAX_PAYLOAD_SIZE
  * The max segment size is given by MAX_SEGMENT_SIZE 
  * 
- * @author 	Majid Ghaderi
- * @version	2024
- *
  */
 
 

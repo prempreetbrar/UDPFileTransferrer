@@ -1,13 +1,6 @@
 /**
  * StopWaitFtp Class
  * 
- * CPSC 441 - L01 - T01
- * Assignment 4
- * 
- * TA: Amir Shani
- * Student: Prempreet Brar
- * UCID: 30112576
- * 
  * Implements a stop-and-wait FTP client using UDP. 
  */
 

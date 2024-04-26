@@ -1,13 +1,6 @@
 
 /**
  *  StopWaitDriver class
- * 
- * CPSC 441
- * Assignment 4
- * 
- * @author 	Majid Ghaderi
- * @version 2024
- *
  */
 
 import java.io.*;
