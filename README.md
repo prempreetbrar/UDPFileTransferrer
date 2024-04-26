@@ -25,26 +25,34 @@ program implements its own reliability mechanism based on the stop-and-wait prot
   from waiting indefinitely for an ACK, the client aborts the file transfer if it does not receive an ACK within a _connection timeout_ period. 
 
 ## Usage/Limitations
-- The root directory of the web server, where the objects are located, is specified as a command line input parameter. If the object path in
-  the `GET` request is `/object-path`, then the file containing the object is located on the absolute path `server-root/object-path` in the file
-  system, where `server-root` is the root directory of the web server.
-- `-p <port_number>` specifies the server's port; default is `2025`
-- `-t <idle_connection_timeout>` specifies the time after which the server closes the TCP connection in **milli-seconds**; default is `0` (which means infinity,
-   ie. idle connections are not closed)
-- `-r <server-root>` is the root directory of the web server (where all its HTTP objects are located); default is the current directory (directory in which program
-   is ran)
-- `quit` is typed in the system terminal to shut the server down. 
-- Sends responses with HTTP version `HTTP/1.1`; only returns responses with the following status codes/phrases:
-  ```
-  200 OK
-  400 Bad Request
-  404 Not Found
-  408 Request Timeout
-  ```
-- Assumes all header lines in the HTTP request are formatted correctly; only an error in the HTTP request line can trigger a `400 Bad Request` error. A
-  properly formatted request line consists of three _mandatory_ parts which are separated by one or more spaces, as follows: `GET /object-path HTTP/1.1`.
-  The command `GET` and protocol `HTTP/1.1` are fixed, while the `object-path` is optional. If no `object-path` is provided, _ie._ the request only specifies "/",
-  then `index.html` is assumed by default. 
+
+### When Running the Client:
+
+- `-i <file_name>` specifies the name of the file to be sent to the server; **REQUIRED**
+- `-s <server_name>` specifies the hostname of the server (ex. cslinux.ucalgary.ca); defaults to `localhost`
+- `-p <port_number>` specifies the port number of the server; note that this is the port number at which the server is running. This is DIFFERENT from the port number
+  used for the server's UDP socket. See the image below:
+
+<br></br>
+![image](https://github.com/prempreetbrar/UDPFileTransferrer/assets/89614923/fd0a48f0-2895-4cab-b94a-85ebbc284ebb)
+In the above image, you see a server process `P1` open a `DatagramSocket` with port number `6428`. Similarly, our server will open a `DatagramSocket` **at its own
+chosen port number. The server's UDP Socket port number is DIFFERENT from the server's port number itself.**
+&nbsp;
+
+- `-t <timeout_interval>` specifies the time in milliseconds after which a segment is retransmitted if an ACK is not received; defaults to 1000 milliseconds (1 second). 
+
+### When Running the Server:
+
+- `-p <port_number>` specifies the port number of the server; **the `-p` flags should match when running both the client and server. Otherwise the client will be unable
+  to connect.** Defaults to `2025`.
+- `-i <initial_seq_num>` specifies the initial sequence number to be used by the server. This is communicated to the client during the TCP handshake process.
+  Defaults to `1`.
+- `-d <average_delay>` specifies the average amount of time the server will wait before sending each ACK; specified in milli-seconds. Default is `1`.
+- `-l <segment_loss_probability>` specifies the probability that the server will drop an arriving segment (to simulate packet loss which is typical in UDP-based transport). Default is `0.010` (1%).
+- `-x <seq_number_to_be_dropped>` specifies the sequence number of the segment to be dropped by the server; this is useful when debugging as you can force the server
+  to always drop a specific segment. Defaults to `-1` (no segment is forcefully dropped).
+- `-t <idle_time>` specifies the time in milliseconds after which the server will shutdown if it does not receive a `DatagramPacket` from the client. Default is `5000`.
+- `-r <seed>` specifies the seed for the random number generator; use the same seed every time to produce the same drop and delay results. Defaults to `13579`. 
 
 ## If you want to start up the project on your local machine:
 1. Download the code as a ZIP:
