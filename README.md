@@ -18,7 +18,7 @@ program implements its own reliability mechanism based on the stop-and-wait prot
   encapsulated in a UDP `DatagramPacket` and then written to the UDP socket.
 - The sequence number for segments starts at the _initial sequence number_ received from the server during the handshake process and is incremented per every
   _segment_ transmitted (not byte, unlike TCP). The "ACK" packets received from the server as `DatagramPacket`'s carry the sequence number of the _next expected
-  segment_ at the server. The ACK `DatagramPacket`'s are de-encapsulated to `FtpSegment`s in order to obtain the acknowledgment number.
+  segment_ at the server. The ACK `DatagramPacket`'s are de-encapsulated to `FtpSegment`'s in order to obtain the acknowledgment number.
 - As soon as a segment is transmitted, the client starts a retransmission timer (as is typical of a stop-and-wait protocol). If the correct ACK arrives, the timer is
   stopped. If the timer expires, the segment is retransmitted and the timer is restarted. 
 - The server terminates a file transfer session if it does not receive any UDP packets from the client during a certain amount of time; to prevent the client program
