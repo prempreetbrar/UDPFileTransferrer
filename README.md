@@ -3,6 +3,7 @@
 A program that implements a simplified FTP client based on UDP; since UDP does not provide reliability, the
 program implements its own reliability mechanism based on the stop-and-wait protocol. See a GIF of me using it below!
 
+![client](https://github.com/prempreetbrar/UDPFileTransferrer/assets/89614923/4b1e1710-01d0-44fd-a2a3-2cc7f1d48fde)
 &nbsp;
 
 ## Features
@@ -58,30 +59,49 @@ chosen port number. The server's UDP Socket port number is DIFFERENT from the se
 ## If you want to start up the project on your local machine:
 1. Download the code as a ZIP:
 <br></br>
-![download](https://github.com/prempreetbrar/TCPWebServer/assets/89614923/291dc4a0-fe63-40b8-a70a-8bd3f987d5b6)
+![download](https://github.com/prempreetbrar/UDPFileTransferrer/assets/89614923/a801f9fd-6845-4cf5-925d-184af22a2357)
 &nbsp;
 
 2. Unzip the code:
 <br></br>
-![unzip](https://github.com/prempreetbrar/TCPWebServer/assets/89614923/e2283434-6b61-41a1-b9b9-bb6380900798)
+![unzip](https://github.com/prempreetbrar/UDPFileTransferrer/assets/89614923/4bda1763-0643-4a89-ae95-27ed07695752)
 &nbsp;
 
 3. Open the folder in an IDE, such as VSCode:
 <br></br>
-![open](https://github.com/prempreetbrar/TCPWebServer/assets/89614923/aa1e0040-15af-4697-b9ab-52104b28e5b4)
+![open](https://github.com/prempreetbrar/UDPFileTransferrer/assets/89614923/f93da787-8f29-41fd-b63a-d037249fe76d)
 &nbsp;
 
-4. Start the server by compiling all files and then running `ServerDriver.java`, as follows:
+4. Start the server by running:
    ```
-   javac *.java
-   java ServerDriver -p <port_number> -t <idle_connection_timeout> -r <server_root>
+   java -jar server/ftpserver.jar
+   [-p <port_number>]
+   [-i <initial_seq_num>]
+   [-d <average_delay>]
+   [-l <segment_loss_probability>]
+   [-x <seq_number_to_be_dropped>]
+   [-t <idle_time>]
+   [-r <seed>]
    ```
 <br></br>
-![server](https://github.com/prempreetbrar/TCPWebServer/assets/89614923/51398c4c-fa7b-4867-b6b9-0b3d40d2bf55)
+![server](https://github.com/prempreetbrar/UDPFileTransferrer/assets/89614923/ee58b56e-0264-4ea6-a54c-cf956ce859b0)
 &nbsp;
 
-5. Send a request to the server using `telnet`, a web browser, or any other application layer protocol:
+5. Start the client by opening up a new terminal and running:
+
+```
+cd client
+javac *.java
+java StopWaitDriver -i client_files/<name_of_file_to_transfer>
+     [-s <server_name>]
+     [-p <port_number>]
+     [-t <timeout_interval>]
+```
+
 <br></br>
-![request](https://github.com/prempreetbrar/TCPWebServer/assets/89614923/44472d33-d81a-4b1a-a282-0cf861a3d654)
+![client](https://github.com/prempreetbrar/UDPFileTransferrer/assets/89614923/571528aa-598d-4ff0-953f-9f891efa90d2)
+&nbsp;
 
-
+6. The transmitted file will be saved in the parent directory of the server; feel free to interact with it:
+<br></br>
+![file](https://github.com/prempreetbrar/UDPFileTransferrer/assets/89614923/ed683b1f-e750-4a2c-ac41-fcd5a954d575)
