@@ -35,8 +35,8 @@ program implements its own reliability mechanism based on the stop-and-wait prot
   used for the server's UDP socket. See the image below:
 
 <br></br>
-![image](https://github.com/prempreetbrar/UDPFileTransferrer/assets/89614923/fd2d8797-4c64-4f92-a75f-dd0949cbc390)
-&nbsp;
+![image](https://github.com/prempreetbrar/UDPFileTransferrer/assets/89614923/ff566ec4-baa4-4919-983b-c3481a4d4061)
+<br></br>
 In the above image, you see a server process `P1` open a `DatagramSocket` with port number `6428`. Similarly, our server will open a `DatagramSocket` **at its own
 chosen port number. The server's UDP Socket port number is DIFFERENT from the server's port number itself.**
 &nbsp;
